@@ -9,12 +9,12 @@ export interface ChatModel {
 export const chatModels: Array<ChatModel> = [
   {
     id: 'chat-model',
-    name: 'Chat model',
-    description: 'Primary model for all-purpose chat',
+    name: 'Gemini 2.0 Flash',
+    description: 'Google\'s latest multimodal AI model with fast responses',
   },
   {
     id: 'chat-model-reasoning',
-    name: 'Reasoning model',
-    description: 'Uses advanced reasoning',
+    name: 'Gemini 2.0 Flash Thinking',
+    description: 'Advanced reasoning model with visible thinking process',
   },
 ];

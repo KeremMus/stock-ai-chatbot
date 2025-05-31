@@ -3,7 +3,7 @@ import {
   extractReasoningMiddleware,
   wrapLanguageModel,
 } from 'ai';
-import { xai } from '@ai-sdk/xai';
+import { google } from '@ai-sdk/google';
 import { isTestEnvironment } from '../constants';
 import {
   artifactModel,
@@ -23,15 +23,14 @@ export const myProvider = isTestEnvironment
     })
   : customProvider({
       languageModels: {
-        'chat-model': xai('grok-2-vision-1212'),
+        'chat-model': google('gemini-2.0-flash-exp'),
         'chat-model-reasoning': wrapLanguageModel({
-          model: xai('grok-3-mini-beta'),
-          middleware: extractReasoningMiddleware({ tagName: 'think' }),
+          model: google('gemini-2.0-flash-thinking-exp'),
+          middleware: extractReasoningMiddleware({ tagName: 'thinking' }),
         }),
-        'title-model': xai('grok-2-1212'),
-        'artifact-model': xai('grok-2-1212'),
+        'title-model': google('gemini-2.0-flash-exp'),
+        'artifact-model': google('gemini-2.0-flash-exp'),
       },
-      imageModels: {
-        'small-model': xai.image('grok-2-image'),
-      },
+      // Note: Gemini does not have separate image models like grok-2-image
+      // Image generation can be handled through the main model or separate service
     });
