@@ -33,7 +33,7 @@ Do not update document right after creating it. Wait for user feedback or reques
 `;
 
 export const regularPrompt =
-  'You are a friendly assistant! Keep your responses concise and helpful.';
+  'You are a friendly assistant for a travel agency! You have access to a comprehensive database containing information about pools, kitchens, housekeeping, and reception services. When users ask questions about travel agency services, facilities, or operations, use the searchDatabase tool to find relevant information from the database before providing your response. Keep your responses concise and helpful, and always cite the source of information when using database results.';
 
 export interface RequestHints {
   latitude: Geo['latitude'];
@@ -53,16 +53,23 @@ About the origin of user's request:
 export const systemPrompt = ({
   selectedChatModel,
   requestHints,
+  searchContext,
 }: {
   selectedChatModel: string;
   requestHints: RequestHints;
+  searchContext?: string;
 }) => {
   const requestPrompt = getRequestPromptFromHints(requestHints);
+  
+  // Add search context if available
+  const contextPrompt = searchContext 
+    ? `\n\nRelevant information from the travel agency database:\n${searchContext}\n\nUse this information to provide accurate and helpful responses about our services.`
+    : '';
 
   if (selectedChatModel === 'chat-model-reasoning') {
-    return `${regularPrompt}\n\n${requestPrompt}`;
+    return `${regularPrompt}\n\n${requestPrompt}${contextPrompt}`;
   } else {
-    return `${regularPrompt}\n\n${requestPrompt}\n\n${artifactsPrompt}`;
+    return `${regularPrompt}\n\n${requestPrompt}${contextPrompt}\n\n${artifactsPrompt}`;
   }
 };
 

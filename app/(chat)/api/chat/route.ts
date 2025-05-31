@@ -23,6 +23,7 @@ import { createDocument } from '@/lib/ai/tools/create-document';
 import { updateDocument } from '@/lib/ai/tools/update-document';
 import { requestSuggestions } from '@/lib/ai/tools/request-suggestions';
 import { getWeather } from '@/lib/ai/tools/get-weather';
+import { searchDatabase } from '@/lib/ai/tools/search-database';
 import { isProductionEnvironment } from '@/lib/constants';
 import { myProvider } from '@/lib/ai/providers';
 import { entitlementsByUserType } from '@/lib/ai/entitlements';
@@ -128,6 +129,30 @@ export async function POST(request: Request) {
       country,
     };
 
+    // Automatically search the database for relevant context
+    let searchContext = "";
+    try {
+      // Extract the user's query text from the message
+      const userQuery = message.parts
+        .filter(part => part.type === 'text')
+        .map(part => part.text)
+        .join(' ');
+
+      if (userQuery.trim()) {
+        console.log(`Searching database for: "${userQuery}"`);
+        
+        // Import search function dynamically with correct path
+        const searchModule = await import('../../../../rag/utils/search-embeddings.js');
+        
+        // Search for relevant information
+        searchContext = await searchModule.searchAndFormatContext(userQuery, 3);
+        console.log(`Search context retrieved: ${searchContext.length} characters`);
+      }
+    } catch (error) {
+      console.error('Error searching database for context:', error);
+      searchContext = "Database search temporarily unavailable.";
+    }
+
     await saveMessages({
       messages: [
         {
@@ -148,7 +173,7 @@ export async function POST(request: Request) {
       execute: (dataStream) => {
         const result = streamText({
           model: myProvider.languageModel(selectedChatModel),
-          system: systemPrompt({ selectedChatModel, requestHints }),
+          system: systemPrompt({ selectedChatModel, requestHints, searchContext }),
           messages,
           maxSteps: 5,
           experimental_activeTools:
@@ -159,6 +184,7 @@ export async function POST(request: Request) {
                   'createDocument',
                   'updateDocument',
                   'requestSuggestions',
+                  'searchDatabase',
                 ],
           experimental_transform: smoothStream({ chunking: 'word' }),
           experimental_generateMessageId: generateUUID,
@@ -170,6 +196,7 @@ export async function POST(request: Request) {
               session,
               dataStream,
             }),
+            searchDatabase,
           },
           onFinish: async ({ response }) => {
             if (session.user?.id) {
